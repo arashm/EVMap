@@ -9,15 +9,28 @@ export default class extends Controller {
 
   connect() {
     this.initMap();
+    this.fetchChargers();
+  }
+
+  get map() {
+    if (this.mapObject) return this.mapObject;
+
+    this.mapObject = L.map(this.mapContainerTarget).setView([this.constructor.lat, this.constructor.lng], 13);
+    return this.map;
   }
 
   initMap() {
-    var map = L.map(this.mapContainerTarget).setView([this.constructor.lat, this.constructor.lng], 13);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this.map);
+  }
 
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-    L.marker([51.5, -0.09]).addTo(map)
-        .bindPopup('A pretty CSS popup.<br> Easily customizable.')
-        .openPopup();
+  fetchChargers() {
+    fetch("/charger.json")
+      .then(response => response.json())
+      .then((data) => {
+        data.forEach((charger) => {
+          L.marker([charger.lat, charger.lng], { riseOnHover: true }).addTo(this.map)
+            .bindPopup(`<b>Connections Available:</b> ${charger.connections_count}<br><b>Is Operational:</b> ${charger.is_operational}`);
+        });
+      });
   }
 }
