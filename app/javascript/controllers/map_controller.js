@@ -15,6 +15,7 @@ export default class extends Controller {
   connect () {
     this.initMap()
     this.fetchChargers()
+    this.layerGroup = new L.layerGroup()
     getStorageLength().then(i => console.log(i + ' tiles in storage'))
   }
 
@@ -29,8 +30,7 @@ export default class extends Controller {
       headers: {
         'X-CSRF-Token': Rails.csrfToken()
       }
-    })
-      .then(response => response.json())
+    }).then(response => response.json())
       .then((data) => {
         const icon = L.icon({
           iconUrl: RED_ICON_URL,
@@ -38,13 +38,17 @@ export default class extends Controller {
         })
         this.addMarkers([data.address_location], true, icon, '<b>Your Location</b>')
         this.addMarkers(data.nearest_stations, false)
+        this.mapObject.setView([data.address_location.lat, data.address_location.lng], 13)
       })
   }
 
-  clearMarkers () {
-    if (!this.allMarkersLayerGroup) return
+  favourite (event) {
+    event.preventDefault()
+    console.log('Favourite', event.target)
+  }
 
-    this.allMarkersLayerGroup.clearLayers()
+  clearMarkers () {
+    this.layerGroup.clearLayers()
   }
 
   get map () {
@@ -99,18 +103,24 @@ export default class extends Controller {
   }
 
   addMarkers (chargers, clearMarkers = true, icon = null, popup = null) {
-    const markers = []
     if (clearMarkers) this.clearMarkers()
 
     const params = { riseOnHover: true }
     if (icon) params.icon = icon
 
     chargers.forEach((charger) => {
-      markers.push(
-        L.marker([charger.lat, charger.lng], params)
-          .bindPopup(popup || `<b>Connections Available:</b> ${charger.connections_count}<br><b>Is Operational:</b> ${charger.is_operational}`)
-      )
+      const marker = L.marker([charger.lat, charger.lng], params)
+        .bindPopup(popup || this.defaultPopupContent(charger))
+      this.layerGroup.addLayer(marker)
     })
-    this.allMarkersLayerGroup = L.layerGroup(markers).addTo(this.map)
+    this.layerGroup.addTo(this.map)
+  }
+
+  defaultPopupContent (charger) {
+    return `
+      <b>Connections Available:</b> ${charger.connections_count}<br>
+      <b>Is Operational:</b> ${charger.is_operational}<br><br>
+      <button class="text-amber-600 font-medium hover:text-amber-700 hover:font-semibold" data-action="click->map#favourite" data-id=${charger.id}>Favourite</a>
+    `
   }
 }

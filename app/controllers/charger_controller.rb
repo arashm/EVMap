@@ -10,6 +10,8 @@ class ChargerController < ApplicationController
     @location = Geokit::Geocoders::OsmGeocoder.geocode(search_params[:q], bias: de_bounds)
     @chargers = Charger.by_distance(origin: [@location.lat, @location.lng]).limit(3)
 
+    Rails.logger.info("Location info: lat: #{@location.lat} lng: #{@location.lng}")
+
     if @location.present?
       render :search
     else
