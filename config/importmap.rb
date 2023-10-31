@@ -8,3 +8,5 @@ pin '@hotwired/stimulus', to: 'stimulus.min.js', preload: true
 pin '@hotwired/stimulus-loading', to: 'stimulus-loading.js', preload: true
 pin_all_from 'app/javascript/controllers', under: 'controllers'
 pin 'leaflet', to: 'https://ga.jspm.io/npm:leaflet@1.9.4/dist/leaflet-src.js'
+pin '@rails/ujs', to: 'https://ga.jspm.io/npm:@rails/ujs@7.1.1/app/assets/javascripts/rails-ujs.esm.js'
+pin_all_from 'app/javascript/constants', under: 'constants'

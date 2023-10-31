@@ -1,9 +1,31 @@
-<div>
+<div data-controller="map">
   <p>
     <%= @message %>
   </p>
 
-  <div data-controller="map" style="height: 800px">
+  <div class="mb-2">
+    <%= form_for(:search, url: search_charger_index_path, data: { action: 'submit->map#search' }) do |f| %>
+      <div class="flex justify-around items-stretch">
+        <span class='w-full flex-grow'>
+          <%= f.text_field :q,
+                       placeholder: "Enter Address",
+                       class:
+                         "w-full rounded-l-lg focus:border-indigo-600 focus:ring focus:ring-indigo-300 focus:ring-opacity-50 py-2",
+                       data: {
+                         "map-target": "searchInput"
+                       } %>
+        </span>
+        <span>
+          <%= f.submit "Search",
+                   class:
+                     "bg-indigo-600 text-white py-2 px-6 rounded-r-lg cursor-pointer outline-none h-full" %>
+        </span>
+      </div>
+
+    <% end %>
+  </div>
+
+  <div style="height: 800px">
     <div
       data-map-target="mapContainer"
       id="map"

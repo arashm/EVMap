@@ -2,6 +2,6 @@
 
 class IndexController < ApplicationController
   def index
-    @message = 'Hello World!'
+    @charger = Charger.new
   end
 end
