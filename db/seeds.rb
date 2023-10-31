@@ -7,3 +7,15 @@
 #   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
 #     MovieGenre.find_or_create_by!(name: genre_name)
 #   end
+
+chargers = OpenChargerMap::Poi.call
+chargers.select { |charger| charger.dig('AddressInfo', 'Town') == 'Berlin' }
+  .each do |charger|
+    Charger.find_or_create_by!(
+      lat: charger['AddressInfo']['Latitude'],
+      lng: charger['AddressInfo']['Longitude'],
+      country: charger['AddressInfo']['Country']['ISOCode'],
+      connections_count: charger['Connections'].size,
+      is_operational: charger['StatusType']['IsOperational']
+    )
+  end

@@ -17,7 +17,7 @@ module OpenChargerMap
     end
 
     def url
-      BASE_URL + path + params.to_param
+      "#{BASE_URL}#{path}?#{params.to_param}"
     end
 
     def params
