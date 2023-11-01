@@ -2,7 +2,9 @@ import { Controller } from '@hotwired/stimulus'
 import L from 'leaflet'
 import { getStorageLength, getBlobByKey, downloadTile, saveTile } from 'leaflet.offline'
 import Rails from '@rails/ujs'
-import { RED_ICON_URL } from 'constants/assets'
+
+import IdbWrapper from 'helpers/idb_wrapper'
+import { redIcon, greenIcon, orangeIcon } from 'helpers/icons'
 
 const MAP_BASE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 
@@ -16,13 +18,15 @@ export default class extends Controller {
     this.initMap()
     this.fetchChargers()
     this.layerGroup = new L.layerGroup()
+    this.db = new IdbWrapper()
+    this.markers = {}
     getStorageLength().then(i => console.log(i + ' tiles in storage'))
   }
 
   search (event) {
     event.preventDefault()
 
-    if (this.searchInputTarget.length) return
+    if (this.searchInputTarget.value.length < 1) return
 
     fetch(`/charger/search.json?q=${this.searchInputTarget.value}`, {
       method: 'POST',
@@ -32,19 +36,26 @@ export default class extends Controller {
       }
     }).then(response => response.json())
       .then((data) => {
-        const icon = L.icon({
-          iconUrl: RED_ICON_URL,
-          iconSize: [40, 40]
-        })
-        this.addMarkers([data.address_location], true, icon, '<b>Your Location</b>')
+        this.addMarkers([data.address_location], true, redIcon, '<b>Your Location</b>')
         this.addMarkers(data.nearest_stations, false)
         this.mapObject.setView([data.address_location.lat, data.address_location.lng], 13)
       })
   }
 
-  favourite (event) {
+  async favourite (event) {
     event.preventDefault()
-    console.log('Favourite', event.target)
+
+    this.db.get(event.target.dataset.id).then((value) => {
+      if (value) {
+        this.db.delete(event.target.dataset.id).then(() => {
+          this.markers[event.target.dataset.id].setIcon(greenIcon)
+        })
+      } else {
+        this.db.set(event.target.dataset.id, true).then(() => {
+          this.markers[event.target.dataset.id].setIcon(orangeIcon)
+        })
+      }
+    })
   }
 
   clearMarkers () {
@@ -69,7 +80,6 @@ export default class extends Controller {
       getBlobByKey(url).then((blob) => {
         if (blob) {
           tile.src = URL.createObjectURL(blob)
-          console.debug(`Loaded ${url} from idb`)
           return
         }
         tile.src = url
@@ -85,10 +95,8 @@ export default class extends Controller {
           urlTemplate,
           createdAt: Date.now()
         }
-        console.log(tileInfo)
         downloadTile(url)
           .then((dl) => saveTile(tileInfo, dl))
-          .then(() => console.debug(`Saved ${url} in idb`))
       })
     })
     baseLayer.addTo(this.map)
@@ -102,25 +110,38 @@ export default class extends Controller {
       })
   }
 
-  addMarkers (chargers, clearMarkers = true, icon = null, popup = null) {
+  addMarkers (chargers, clearMarkers = true, icon = greenIcon, popup = null) {
     if (clearMarkers) this.clearMarkers()
 
     const params = { riseOnHover: true }
-    if (icon) params.icon = icon
-
     chargers.forEach((charger) => {
-      const marker = L.marker([charger.lat, charger.lng], params)
-        .bindPopup(popup || this.defaultPopupContent(charger))
-      this.layerGroup.addLayer(marker)
+      this.isChargerFavorite(charger).then((value) => {
+        if (value) {
+          params.icon = orangeIcon
+        } else {
+          params.icon = icon || greenIcon
+        }
+
+        const marker = L.marker([charger.lat, charger.lng], params)
+          .bindPopup(popup || this.defaultPopupContent(charger))
+        this.markers[charger.id] = marker
+        this.layerGroup.addLayer(marker)
+      })
     })
     this.layerGroup.addTo(this.map)
+  }
+
+  async isChargerFavorite (charger) {
+    if (charger.id === undefined) return false
+
+    return await this.db.get(charger.id)
   }
 
   defaultPopupContent (charger) {
     return `
       <b>Connections Available:</b> ${charger.connections_count}<br>
       <b>Is Operational:</b> ${charger.is_operational}<br><br>
-      <button class="text-amber-600 font-medium hover:text-amber-700 hover:font-semibold" data-action="click->map#favourite" data-id=${charger.id}>Favourite</a>
+      <button class="text-amber-600 font-medium hover:text-amber-700 hover:font-semibold" data-action="click->map#favourite" data-id=${charger.id}>Toggle Favourite</a>
     `
   }
 }
