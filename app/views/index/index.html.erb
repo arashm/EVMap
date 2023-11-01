@@ -1,6 +1,8 @@
 <div data-controller="map">
-  <p>
-    <%= @message %>
+  <p class="mb-2 text-slate-700">
+    This is the map EV chargers within Berlin. You can search for an address to
+    get the 3 nearest chargers to your location, or set your favorite chargers
+    by clicking on them.
   </p>
 
   <div class="mb-2">
@@ -27,6 +29,8 @@
       </div>
 
     <% end %>
+
+    <%= render "flash_message" %>
   </div>
 
   <div style="height: 800px">

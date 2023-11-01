@@ -5,6 +5,7 @@ import Rails from '@rails/ujs'
 
 import IdbWrapper from 'helpers/idb_wrapper'
 import { redIcon, greenIcon, orangeIcon } from 'helpers/icons'
+import { NOT_FOUND, SERVER_ERROR, INVALID_ADDRESS } from 'constants/messages'
 
 const MAP_BASE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
 
@@ -26,7 +27,10 @@ export default class extends Controller {
   search (event) {
     event.preventDefault()
 
-    if (this.searchInputTarget.value.length < 1) return
+    if (this.searchInputTarget.value.length < 1) {
+      this.dispatch('flash', { detail: { message: INVALID_ADDRESS } })
+      return
+    }
 
     fetch(`/charger/search.json?q=${this.searchInputTarget.value}`, {
       method: 'POST',
@@ -34,12 +38,30 @@ export default class extends Controller {
       headers: {
         'X-CSRF-Token': Rails.csrfToken()
       }
-    }).then(response => response.json())
-      .then((data) => {
-        this.addMarkers([data.address_location], true, redIcon, '<b>Your Location</b>')
-        this.addMarkers(data.nearest_stations, false)
-        this.mapObject.setView([data.address_location.lat, data.address_location.lng], 13)
-      })
+    }).then(response => {
+      if (response.status >= 500) {
+        this.dispatch('flash', { detail: { message: SERVER_ERROR } })
+        return
+      } else if (response.status >= 400 && response.status < 500) {
+        this.dispatch('flash', { detail: { message: NOT_FOUND } })
+        return
+      }
+
+      this.parseResponse(response)
+    })
+  }
+
+  async parseResponse (response) {
+    await response.json().then((data) => {
+      if (data.address_location.lat === undefined) {
+        this.dispatch('flash', { detail: { message: NOT_FOUND } })
+        return
+      }
+
+      this.addMarkers([data.address_location], true, redIcon, '<b>Your Location</b>')
+      this.addMarkers(data.nearest_stations, false)
+      this.mapObject.setView([data.address_location.lat, data.address_location.lng], 13)
+    })
   }
 
   async favourite (event) {
