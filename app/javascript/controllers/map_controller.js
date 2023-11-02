@@ -80,6 +80,11 @@ export default class extends Controller {
     })
   }
 
+  reset () {
+    this.mapObject.setView([this.constructor.initial_lat, this.constructor.initial_lng], 13)
+    this.fetchChargers()
+  }
+
   clearMarkers () {
     this.layerGroup.clearLayers()
   }

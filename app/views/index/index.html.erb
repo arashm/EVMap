@@ -1,7 +1,7 @@
 <div data-controller="map">
   <p class="mb-2 text-slate-700">
     This is the map EV chargers within Berlin. You can search for an address to
-    get the 3 nearest chargers to your location, or set your favorite chargers
+    get the 3 nearest chargers to your location, or set your favourite chargers
     by clicking on them.
   </p>
 
@@ -20,10 +20,19 @@
         <span>
           <%= f.submit "Search",
                    class:
-                     "bg-indigo-600 text-white py-2 px-6 rounded-r-lg cursor-pointer outline-none h-full",
+                     "bg-indigo-600 text-white py-2 px-6 cursor-pointer outline-none h-full hover:ring hover:ring-indigo-300 hover:ring-opacity-50",
                    data: {
                      disable_with: false
                    } %>
+        </span>
+        <span>
+          <%= button_tag "Reset",
+          class:
+            "bg-indigo-600 h-full text-white py-2 px-6 rounded-r-lg cursor-pointer outline-none h-full hover:ring hover:ring-indigo-300 hover:ring-opacity-50",
+          type: "button",
+          data: {
+            action: "click->map#reset"
+          } %>
 
         </span>
       </div>
