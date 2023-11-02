@@ -1,24 +1,32 @@
-# README
+EVMap is a simple PWA that shows EV charger locations in Berlin, in a map. The app leverages service workers to provide
+some of the functionality offline. As you load the map and move around it, the app will cache the map tiles you have
+loaded to be used when offline. Search functionality is not available when offline.
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+Users can enter a simple address in Berlin (like `Lützowufer 15`) and get up to 3 closest charging stations around the location.
 
-Things you may want to cover:
+# Setting up
 
-* Ruby version
+The app requires Ruby `3.2.2`. To setup the app after running `bundle install` to install the required gems, run:
 
-* System dependencies
+```shell
+bundle exec rails db:setup
+```
 
-* Configuration
+Then run the app using `./bin/dev`.
 
-* Database creation
+# Services and libraries used
 
-* Database initialization
+* Open charge map is used for getting the EV charger locations in Berlin. This is ran once when seeding the DB.
 
-* How to run the test suite
+* Geokit gem is used for converting addresses to longitude and latitudes to be able to locate it on the map and showing
+  the closest charging stations. The gem uses OpenStreetMap.
 
-* Services (job queues, cache servers, search engines, etc.)
+* leafletjs for map (using OpenStreetMap)
 
-* Deployment instructions
+* IndexedDB for caching requests and map tiles for offline use and storing users' favorite charging stations
 
-* ...
+* Google's workbox to help with caching using service workers
+
+* Tailwind for css
+
+* Stimulus for JS related codes
